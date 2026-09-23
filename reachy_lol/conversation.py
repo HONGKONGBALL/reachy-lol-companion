@@ -19,9 +19,11 @@ def name_call(text, name='默默'):
     Return (addressed, remaining request). The default nickname stays callable
     when the display name changes. Echo/noise filtering still runs before this.
     """
-    names=sorted({compact(n) for n in ('默默',name) if n},key=len,reverse=True)
+    # ASR often writes the nickname as 陌陌/墨墨/莫莫. Treat these as
+    # pronunciation aliases only in a vocative, never replace ordinary text.
+    names=sorted({compact(n) for n in ('默默','陌陌','墨墨','莫莫','momo',name) if n},key=len,reverse=True)
     value=compact(text)
-    value=re.sub(r'^(?:嘿|喂|嗨|你好|哈喽|hello|hi)', '',value)
+    value=re.sub(r'^(?:(?:嘿|喂|嗨|你好|哈喽|hello|hi|我靠|卧槽|我操|我草|我去|哎呀|哎哟|哎呦|诶|欸|哎|啊)[呀啊哦]*)+', '',value)
     pattern='(?:'+'|'.join(re.escape(n) for n in names)+')'
     match=re.match(pattern+'+',value)
     if not match:

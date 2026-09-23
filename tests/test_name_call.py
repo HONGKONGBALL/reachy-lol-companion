@@ -15,6 +15,12 @@ from reachy_lol.runtime import Runtime
     ('小桃，金身是什么？','小桃',(True,'金身是什么')),
     ('我在默默打游戏','默默',(False,'我在默默打游戏')),
     ('队友说默默别说话','默默',(False,'队友说默默别说话')),
+    ('我靠，陌陌，队友给对面送了个四杀，怎么办啊？','默默',
+     (True,'队友给对面送了个四杀怎么办啊')),
+    ('哎呀，墨墨！','默默',(True,'')),
+    ('喂，莫莫，在吗？','默默',(True,'在吗')),
+    ('Momo！','默默',(True,'')),
+    ('我在陌陌上聊天','默默',(False,'我在陌陌上聊天')),
 ])
 def test_vocative(text,name,expected):
     assert name_call(text,name)==expected
@@ -54,13 +60,14 @@ def test_name_only_reaches_audio_during_combat_quiet_and_cooldown(tmp_path,in_ga
     asyncio.run(run())
 
 
-def test_named_question_bypasses_semantic_attribution_but_uses_answer_model():
+@pytest.mark.parametrize('question',['默默，金身是什么？','我靠，陌陌，队友送四杀了怎么办啊？'])
+def test_named_question_bypasses_semantic_attribution_but_uses_answer_model(question):
     async def run():
         c=Cloud(lambda _:None)
         c.structured=AsyncMock(return_value=OwnerTurn(action='respond',
             reply=Reply(text='金身就是中娅沙漏，主动效果可以短暂无敌。',motion='neutral',evidence=[])))
         try:
-            result=await c.owner_turn('aqi','默默，金身是什么？',None,[],{},
+            result=await c.owner_turn('aqi',question,None,[],{},
                                       {'name':'默默'},{'input_source':'microphone'})
             assert result.action=='respond'
             assert c.structured.call_args.args[-1] is OwnerTurn
