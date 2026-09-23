@@ -13,6 +13,8 @@ const defaults={name:'默默',voice:null,intensity:'normal',volume:.35,input_dev
 let state=structuredClone(defaults), gender=null, saved=null, available={}, runtime=null;
 let audioSettingsSupported=false, capabilities={};
 let loaded=false, auditionId=null, windowSignature='', saving=false;
+let modeChanging=false;
+const modeNames={chill:'安静陪伴',normal:'恰到好处',chaos:'热闹一点'};
 let identityView=null, identitySignature='', identityDirty=false;
 function renderIdentity(info,force=false){
   $('#refreshIdentity').disabled=!info;
@@ -94,13 +96,31 @@ async function loadPreferences(){
 }
 async function savePreferences(){
   if(!loaded)throw Error('尚未读到后端设置，请刷新页面重试');
-  if(saving)throw Error('设置正在保存，请稍候');
+  if(saving||modeChanging)throw Error('设置正在保存，请稍候');
   const initial=JSON.stringify(state);const payload=structuredClone(state);payload.name=payload.name.trim()||'默默';
   if(!capabilities.seat)delete payload.seat_yaw;
   if(!audioSettingsSupported)for(const key of ['volume','input_device','output_device'])delete payload[key];
   saving=true;$('#save').disabled=true;
   try{const data=await api('/api/preferences',payload,'PUT');const normalized={...structuredClone(defaults),...data.preferences};saved=JSON.stringify(normalized);available=data.voice_available;if(JSON.stringify(state)===initial){state=normalized;$('#robotName').value=state.name;}changed();message('#saved',dirty()?'上一版已保存，还有新的调整':'✓ 已保存到本机');$('#saved').classList.add('show');return data;}
   finally{saving=false;$('#save').disabled=false;}
+}
+async function applyIntensity(intensity){
+  if(!loaded||saving||modeChanging)return;
+  if(!capabilities.live_intensity){message('#intensityStatus','请刷新页面或更新后端后再切换强度。',true);return;}
+  modeChanging=true;$$('.mode').forEach(b=>b.disabled=true);$('#save').disabled=true;
+  message('#intensityStatus','正在应用到陪玩后端…');
+  try{
+    const data=await api('/api/intensity',{intensity},'PUT');
+    if(data.behavior?.intensity!==intensity||data.behavior?.quiet!==false)throw Error('后端未确认启用所选强度，请重试');
+    // Only the server-confirmed mode changes; other unsaved controls stay drafts.
+    state.intensity=data.behavior.intensity;
+    saved=JSON.stringify({...JSON.parse(saved),intensity:state.intensity});
+    if(runtime){runtime.intensity=state.intensity;runtime.quiet=false;}
+    renderModes();changed();
+    message('#intensityStatus',`已生效：${modeNames[state.intensity]} · 主动回应已开启`);
+    await refresh();
+  }catch(e){message('#intensityStatus',`未生效：${e.message}`,true);}
+  finally{modeChanging=false;$$('.mode').forEach(b=>b.disabled=false);$('#save').disabled=false;}
 }
 async function stopPreview(){if(auditionId){auditionId=null;try{await api('/api/control',{action:'stop'});}catch(e){message('#voiceNotice',e.message,true);}renderVoices();}}
 async function audition(id){
@@ -146,7 +166,7 @@ for(const direction of ['input','output'])$('#'+direction+'Device').onchange=e=>
 $('#saveDevices').onclick=async()=>{try{await savePreferences();message('#deviceNotice','本体音频设置已保存。');}catch(e){message('#deviceNotice',e.message,true);}};
 $('#robotName').oninput=e=>{state.name=e.target.value;changed();};
 $$('[data-gender]').forEach(b=>b.onclick=()=>{stopPreview();gender=b.dataset.gender;if(profiles[state.voice]?.gender!==gender)state.voice=Object.keys(profiles).find(k=>profiles[k].gender===gender);renderVoices(true);changed();});
-$$('.mode').forEach(b=>b.onclick=()=>{state.intensity=b.dataset.mode;renderModes();changed();});
+$$('.mode').forEach(b=>b.onclick=()=>applyIntensity(b.dataset.mode));
 $('#save').onclick=async()=>{try{await savePreferences();}catch(e){message('#saved',e.message,true);}};
 $('#reset').onclick=()=>{stopPreview();state={...structuredClone(defaults),seat_yaw:state.seat_yaw};gender=null;sync();changed();message('#saved','已恢复默认，保存后生效');};
 $('#startSession').onclick=async()=>{
@@ -166,6 +186,13 @@ $('#connectRobot').onclick=async()=>{const b=$('#connectRobot');try{b.disabled=t
 async function refresh(){
   try{
     const s=await api('/api/state');runtime=s;renderAudioDevices();$('#seatYaw').disabled=s.running;
+    if(!modeChanging&&s.intensity){
+      // Read the effective mode back from the backend (including other tabs).
+      if(loaded&&saved&&JSON.parse(saved).intensity===state.intensity){
+        state.intensity=s.intensity;saved=JSON.stringify({...JSON.parse(saved),intensity:s.intensity});renderModes();
+      }
+      message('#intensityStatus',`后端已生效：${modeNames[s.intensity]} · ${s.quiet?'主动回应已暂停，点击强度可恢复':'主动回应已开启'}`);
+    }
     renderIdentity(s.identity_status);
     const ready=s.state.robot.startsWith('实机已连接');
     $('#connectionDot').classList.toggle('off',!ready);$('#connectionText').textContent=ready?'Reachy 已连接':'Reachy 未就绪';$('#cameraState').textContent=ready?'已关闭':'等待服务确认';
@@ -176,7 +203,7 @@ async function refresh(){
     $('#lastHeard').textContent=s.state.last_heard?'刚才听到：'+s.state.last_heard:'尚未识别到本次对话';
     $('#startSession').disabled=s.running||!ready;$('#startSession').textContent=s.running?'正在陪你':'开始陪伴';
     for(const id of ['quietSession','pauseSession','endSession'])$('#'+id).disabled=!s.running;
-    $('#quietSession').textContent=s.quiet?'恢复回应':'安静陪着';$('#pauseSession').textContent=s.paused?'恢复采集':'暂停采集';
+    $('#quietSession').textContent=s.quiet?'恢复主动回应':'暂停主动回应';$('#pauseSession').textContent=s.paused?'恢复采集':'暂停采集';
     const names={robot:'Reachy 连接',microphone:'本体麦克风',speaker:'本体扬声器',motion:'本体动作',capture:'游戏画面',game_api:'国服只读接口',vision_safety:'发言时机检查',match_research:'本局阵容与外号资料',equipment_memory:'长期装备记忆',build_research:'本局出装攻略',expression_skills:'情绪动作预设'};
     $('#deviceGrid').replaceChildren();for(const [k,name] of Object.entries(names)){const value=s.state[k]||'等待检查';const box=document.createElement('div');box.className='device-item';box.dataset.ready=String(k==='robot'?ready:value.includes('已')||value.includes('真实'));const title=document.createElement('b');title.textContent=name;const description=document.createElement('span');description.textContent=value;box.append(title,description);$('#deviceGrid').append(box);}
     const signature=JSON.stringify(s.windows);if(signature!==windowSignature){const selected=$('#gameWindow').value;windowSignature=signature;$('#gameWindow').replaceChildren();const games=s.windows.filter(w=>w.is_game);if(!games.length)$('#gameWindow').add(new Option(s.windows.length?'当前只有大厅，请先进入对局':'尚未发现英雄联盟窗口',''));for(const w of games)$('#gameWindow').add(new Option(w.title,w.hwnd));if(games.some(w=>String(w.hwnd)===selected))$('#gameWindow').value=selected;}

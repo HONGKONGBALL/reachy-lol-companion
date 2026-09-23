@@ -152,7 +152,8 @@ class Runtime:
     def snapshot(self):
         self.gate.allowed(time.monotonic())
         return dict(state=self.state,role=self.role,running=self.gate.running,paused=self.gate.paused,
-                    quiet=self.gate.quiet,gate=self.gate.reason,frames=len(self.buffer.frames),
+                    quiet=self.gate.quiet,intensity=self.preferences.intensity,
+                    gate=self.gate.reason,frames=len(self.buffer.frames),
                     analysis_waiting=self.analysis.qsize(),pending=len(self.pending),
                     identity=self.identity,identity_status=self.identities.snapshot(),situation=self.latest,
                     episodes=self.episodes.summaries(),logs=list(self.logs)[-20:],
@@ -169,7 +170,9 @@ class Runtime:
 
     def preferences_snapshot(self):
         return {'preferences':self.preferences.model_dump(),
-                'capabilities':{'seat':True,'clear_data':True,'reported_identity':True},
+                'behavior':{'intensity':self.preferences.intensity,'quiet':self.gate.quiet,
+                            'cooldown':self.gate.cooldown},
+                'capabilities':{'seat':True,'clear_data':True,'reported_identity':True,'live_intensity':True},
                 'voice_available':{p:bool(os.getenv(env)) and self.cloud.configured('tts') for p,env in VOICE_ENV.items()}}
 
     def memory_context(self,text=''):
@@ -273,6 +276,13 @@ class Runtime:
                 selection=getattr(prefs,direction+'_device')
                 if selection is not None:
                     choose_device(direction,selection)
+        # Persist first: a failed write must not report failure while silently
+        # applying the new selection to the running session.
+        path=self.root/'preferences.json'
+        temporary=path.with_suffix('.tmp')
+        temporary.write_text(prefs.model_dump_json(indent=2),encoding='utf8')
+        temporary.replace(path)
+        intensity_changed=prefs.intensity!=self.preferences.intensity
         await self.halt('更新搭子设置')
         self.preferences=prefs
         self.audio.volume=prefs.volume
@@ -280,10 +290,16 @@ class Runtime:
         self.audio.output_device=prefs.output_device
         self.role=VOICE_ROLE.get(prefs.voice,self.role)
         self.gate.cooldown={'chill':45,'normal':30,'chaos':20}[prefs.intensity]
-        path=self.root/'preferences.json'
-        temporary=path.with_suffix('.tmp')
-        temporary.write_text(prefs.model_dump_json(indent=2),encoding='utf8')
-        temporary.replace(path)
+        if intensity_changed:
+            self.gate.quiet=False
+        return self.preferences_snapshot()
+
+    async def set_intensity(self,intensity):
+        # Selecting a mode is an explicit request to use that speaking style,
+        # including reselecting the current mode after temporarily going quiet.
+        prefs=Preferences(**{**self.preferences.model_dump(),'intensity':intensity})
+        await self.save_preferences(prefs)
+        self.gate.quiet=False
         return self.preferences_snapshot()
 
     async def configure_seat(self,yaw):

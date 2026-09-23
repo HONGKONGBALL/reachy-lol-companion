@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import secrets
 import os
+from typing import Literal
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
@@ -68,6 +69,15 @@ async def save_preferences(payload:Preferences):
         return await runtime.save_preferences(payload)
     except ValueError as exc:
         raise HTTPException(400,str(exc))
+
+
+class IntensitySetting(BaseModel):
+    intensity: Literal['chill','normal','chaos']
+
+
+@app.put('/api/intensity')
+async def intensity_setting(payload:IntensitySetting):
+    return await runtime.set_intensity(payload.intensity)
 
 
 class SeatSetting(BaseModel):
