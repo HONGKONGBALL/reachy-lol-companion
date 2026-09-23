@@ -13,6 +13,23 @@ def compact(text):
     return re.sub(r'[^\w\u4e00-\u9fff]', '', text.lower())
 
 
+def name_call(text, name='默默'):
+    """Recognize a spoken vocative, not a name mentioned inside a sentence.
+
+    Return (addressed, remaining request). The default nickname stays callable
+    when the display name changes. Echo/noise filtering still runs before this.
+    """
+    names=sorted({compact(n) for n in ('默默',name) if n},key=len,reverse=True)
+    value=compact(text)
+    value=re.sub(r'^(?:嘿|喂|嗨|你好|哈喽|hello|hi)', '',value)
+    pattern='(?:'+'|'.join(re.escape(n) for n in names)+')'
+    match=re.match(pattern+'+',value)
+    if not match:
+        return False,value
+    request=value[match.end():]
+    return True,request
+
+
 def has_address_cue(text, names=()):
     if any(name and name.lower() in text.lower() for name in ('阿栖','阿闹','reachy','机器人','搭子',*names)):
         return True

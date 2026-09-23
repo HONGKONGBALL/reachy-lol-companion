@@ -23,7 +23,7 @@ from .identity import Identity
 from .episodes import Episodes
 from .daemon_health import needs_live_probe, robot_health
 from .acoustics import SpeechFrontEnd, UtteranceSegmenter
-from .conversation import ConversationContext, reply_problem
+from .conversation import ConversationContext, reply_problem, name_call
 from .match_research import research_match
 from .long_memory import LongMemory
 from .opgg import champion_build
@@ -1084,7 +1084,7 @@ class Runtime:
                     problem=reply_problem(item.text,self.conversation.completed_replies())
                     # Intentional repetitions of a direct answer are handled at
                     # generation time; proactive comments must not repeat either.
-                    if problem and (item.proactive or problem in ('empty_reassurance','stock_opener')):
+                    if problem and item.purpose!='name_call' and (item.proactive or problem in ('empty_reassurance','stock_opener')):
                         self.log('reply_rejected',reason=problem,turn_id=item.turn_id)
                         continue
                     playback_session=self.session
@@ -1309,11 +1309,28 @@ class Runtime:
             return 'pause'
         return None
 
+    def acknowledge_name(self,text,turn_id,input_finished_at,*,failed=False):
+        # A real call deserves an audible acknowledgement even without a model
+        # answer. It is a direct reply, so combat and proactive cooldown do not apply.
+        answer='刚才的问题没处理好，你再说一次？' if failed else '在呢，你说。'
+        self.conversation.remember('user',text)
+        self.conversation.remember('assistant',answer,'queued')
+        self.state['dialogue']='听到你叫我，准备回应'
+        self.state['last_reply']=answer
+        self.pending.append(Candidate(answer,self.role,self.gate.epoch,time.monotonic(),[],False,'neutral',
+                                      purpose='name_call',turn_id=turn_id,input_finished_at=input_finished_at))
+
     async def owner_text(self,text,turn_id=None,input_finished_at=None,audio_context=None):
+        if not self.gate.running or self.gate.paused:
+            return
         turn_id=turn_id or uuid.uuid4().hex
-        action=self.local_voice_action(text)
-        if action and (audio_context is None or action=='quiet'):
+        called,request=name_call(text,self.preferences.name)
+        action=self.local_voice_action(request if called else text)
+        if action and (called or audio_context is None or action=='quiet'):
             return await self.control(action)
+        if called and request in ('','呀','啊','在吗','你在吗','在不在','说话','说句话'):
+            self.acknowledge_name(text,turn_id,input_finished_at)
+            return
         epoch=self.gate.epoch
         stage='model_reply'
         try:
@@ -1332,6 +1349,9 @@ class Runtime:
             stage='apply_'+action
             self.log('owner_intent',action=action)
             if action=='ignore':
+                if called:
+                    self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
+                    return
                 self.state['dialogue']='这句话未判断为对我说，继续听你说'
                 self.log('speech_rejected',reason='not_addressed_to_assistant',turn_id=turn_id)
                 return
@@ -1368,6 +1388,9 @@ class Runtime:
                 problem=reply_problem(reply.text,self.conversation.snapshot()['recent_replies'],text)
                 if problem:
                     self.log('reply_rejected',reason=problem,turn_id=turn_id)
+                    if called:
+                        self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
+                        return
                     self.state['dialogue']='已过滤重复或空泛回复，继续收听'
                     return
                 self.conversation.remember('assistant',reply.text,'queued')
@@ -1375,6 +1398,8 @@ class Runtime:
                 self.state['last_reply']=reply.text
                 self.pending.append(Candidate(reply.text,self.role,epoch,time.monotonic(),reply.evidence,False,reply.motion,
                                                   turn_id=turn_id,input_finished_at=input_finished_at))
+            elif called:
+                self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
         except asyncio.CancelledError:
             pass
         except Exception as exc:
@@ -1382,6 +1407,8 @@ class Runtime:
             self.state['cloud']='对话未完成：'+type(exc).__name__
             self.log('dialogue_failed',error=type(exc).__name__,error_code=dialogue_error_code(exc),
                      stage=stage,turn_id=turn_id)
+            if called and epoch==self.gate.epoch and self.gate.running and not self.gate.paused:
+                self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
 
     async def diagnostic(self, kind):
         if self.clearing_data:
