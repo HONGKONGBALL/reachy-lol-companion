@@ -1,0 +1,35 @@
+# Credentials and local machine settings
+.env
+.env.*
+!.env.example
+preferences.json
+preferences.tmp
+*.pem
+*.key
+*_credentials*
+*token-cache*
+
+# Rebuildable environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.cache/
+tmp/
+output/
+
+# Real sessions, audio, screenshots, diagnostics and generated reports
+evidence/*
+!evidence/.gitkeep
+*.log
+*.wav
+*.pcm
+*.mp3
+*.mp4
+*.zip
+*.bundle
+memory/*.tmp

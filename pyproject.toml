@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reachy-lol-companion"
+version = "0.2.0"
+description = "Windows League of Legends companion for Reachy Mini with voice, HF motions and local equipment memory"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.141.1", "uvicorn==0.53.0", "httpx==0.28.1",
+  "pydantic==2.13.5", "python-dotenv==1.2.3", "python-multipart==0.0.32",
+  "numpy==2.5.3", "pillow==12.3.0", "sounddevice==0.5.6",
+  "pywebrtc-audio==0.2.0", "psutil==7.2.2", "pyserial==3.5",
+  "reachy-mini==1.11.0", "huggingface_hub==1.32.0", "websockets==15.0.1",
+  "comtypes==1.4.17",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+docs = ["reportlab", "pypdf"]
+
+[project.scripts]
+reachy-expressions = "reachy_skills.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["reachy_lol*", "reachy_skills*"]
+
+[tool.setuptools.package-data]
+reachy_lol = ["*.html", "*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

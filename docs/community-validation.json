@@ -1,0 +1,468 @@
+{
+  "checked_at": "2026-09-23T18:55:15.860212+00:00",
+  "scope": "Pinned files, audio file existence, license metadata, finite SDK trajectory structure; no hardware execution or audio content validation",
+  "sources": [
+    {
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "HTurlet15/reachy-alive",
+      "revision": "e0ae90e3642ea1e07e4cdb4172290ead869d95a6",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "tfrere/reachy-personalities",
+      "revision": "02ed9f1a478ec19a346e7bec90bb6af83c09e1c1",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "apirrone/marionette-moves",
+      "revision": "d97420b711853ab698c13b612eb3ee01ad0b317f",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "ShivanshVikram/happy-dance",
+      "revision": "fecbbfb3a0b466c8d07e7c8a72ebc01ec7264389",
+      "license": "apache-2.0"
+    },
+    {
+      "repo_id": "Anne-Charlotte/pirate-character",
+      "revision": "30c3b10d510e94c9aaf219f278111c8715b34c3b",
+      "license": "apache-2.0"
+    }
+  ],
+  "moves": [
+    {
+      "skill_id": "anne.chill",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/chill.json",
+      "audio_filename": "data/chill.ogg",
+      "samples": 1068,
+      "duration_seconds": 21.994,
+      "status": "valid",
+      "sha256": "514e0d794bc9580530e0116f0b8c34b1ea85e176055032557bee606cb5e84a59",
+      "bytes": 236683
+    },
+    {
+      "skill_id": "anne.dazed",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/dazed.json",
+      "audio_filename": "data/dazed.ogg",
+      "samples": 433,
+      "duration_seconds": 8.973,
+      "status": "valid",
+      "sha256": "40a6b81aa39d05845a68c95ca7b2d8922477185703e49c73352a7ce092365438",
+      "bytes": 237155
+    },
+    {
+      "skill_id": "anne.discovering",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/discovering.json",
+      "audio_filename": "data/discovering.ogg",
+      "samples": 222,
+      "duration_seconds": 4.514,
+      "status": "valid",
+      "sha256": "01908a45485aa7eec238b67c2a9763cb292b08416a92b18e90422de2e2fce8ee",
+      "bytes": 121666
+    },
+    {
+      "skill_id": "anne.hanging_out",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/hanging-out.json",
+      "audio_filename": "data/hanging-out.ogg",
+      "samples": 711,
+      "duration_seconds": 14.69,
+      "status": "valid",
+      "sha256": "a55a483065519f8fcd55be0a1f901a10477417c6bfdb76fa9bc3cfc7dec61229",
+      "bytes": 389577
+    },
+    {
+      "skill_id": "anne.no_way",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/no-way.json",
+      "audio_filename": "data/no-way.ogg",
+      "samples": 164,
+      "duration_seconds": 3.388,
+      "status": "valid",
+      "sha256": "25e8d83f12a7448e005829aba31ed03f95d0c9099a53cc137dcd91d12e0a232c",
+      "bytes": 89889
+    },
+    {
+      "skill_id": "anne.nodding",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/nodding.json",
+      "audio_filename": "data/nodding.ogg",
+      "samples": 103,
+      "duration_seconds": 2.122,
+      "status": "valid",
+      "sha256": "ee02be773e52f0f401333d8b53659483f5f2f758afbe25d4ce372b2dfae72828",
+      "bytes": 56451
+    },
+    {
+      "skill_id": "anne.peekaboo",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/pick-a-boo.json",
+      "audio_filename": "data/pick-a-boo.ogg",
+      "samples": 161,
+      "duration_seconds": 3.312,
+      "status": "valid",
+      "sha256": "9cc7714085935659ca73cdc2d3bcf80322114e60eec6698bdc18f4c8345ea0d0",
+      "bytes": 88125
+    },
+    {
+      "skill_id": "anne.surprise",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/surprise.json",
+      "audio_filename": "data/surprise.ogg",
+      "samples": 68,
+      "duration_seconds": 1.377,
+      "status": "valid",
+      "sha256": "6e756be926feaf326c7651e54760a206acd0b3efc77f7b4de8367fc40ac26778",
+      "bytes": 37323
+    },
+    {
+      "skill_id": "anne.waiting",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/waiting.json",
+      "audio_filename": null,
+      "samples": 483,
+      "duration_seconds": 9.956,
+      "status": "valid",
+      "sha256": "5fc7e14ce0f41e6f61b004a054511651379d35a3bea3f10c48c2b3b368f5b01b",
+      "bytes": 264778
+    },
+    {
+      "skill_id": "anne.attention",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/calling-for-attention.json",
+      "audio_filename": null,
+      "samples": 481,
+      "duration_seconds": 9.956000000000001,
+      "status": "valid",
+      "sha256": "abed4e5361025823d277a071b0919531651cb8e3393d719f27368bae27c40edf",
+      "bytes": 263700
+    },
+    {
+      "skill_id": "anne.whistling",
+      "repo_id": "Anne-Charlotte/new-emotions",
+      "revision": "f4ff49c51da612b1680816725dc0a181a11a5693",
+      "filename": "data/whistling.json",
+      "audio_filename": "data/whistling.ogg",
+      "samples": 111,
+      "duration_seconds": 2.258,
+      "status": "valid",
+      "sha256": "6bd0bdc92a31cb4ab6fe08dc68320dc92955cff68bf3171b4398c46e72a05885",
+      "bytes": 60745
+    },
+    {
+      "skill_id": "stella.think",
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "filename": "data/head-down-antennae-think.json",
+      "audio_filename": null,
+      "samples": 239,
+      "duration_seconds": 2.493512799992459,
+      "status": "valid",
+      "sha256": "52d45e03b38a537c9211fc76860e32982a1e9b7aa54707187371b5d673e6c671",
+      "bytes": 183989
+    },
+    {
+      "skill_id": "stella.slow_think",
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "filename": "data/head-down-antennae-slow.json",
+      "audio_filename": null,
+      "samples": 192,
+      "duration_seconds": 1.991781799995806,
+      "status": "valid",
+      "sha256": "dcc45927fb637e9276cfb88eae822af333ff3dc11883c1a005fd3435fa9b53e9",
+      "bytes": 148008
+    },
+    {
+      "skill_id": "stella.wiggle",
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "filename": "data/head-down-antennae-wiggle.json",
+      "audio_filename": null,
+      "samples": 191,
+      "duration_seconds": 1.9929167999944184,
+      "status": "valid",
+      "sha256": "f234b31844bb45f58c92d9676c7144203c388a364529820586788d58ccb1aedf",
+      "bytes": 147047
+    },
+    {
+      "skill_id": "stella.double_nod",
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "filename": "data/double-nod.json",
+      "audio_filename": null,
+      "samples": 140,
+      "duration_seconds": 1.4967035000008764,
+      "status": "valid",
+      "sha256": "4c2782687758e4225b6c8fb077551d8bed092d3d7152c9699110b07780dbefd2",
+      "bytes": 107924
+    },
+    {
+      "skill_id": "stella.slow_nod",
+      "repo_id": "stellaaaa/thinking-animations",
+      "revision": "a7fb5f0b7de631a68b1a982edcb54b9795cc5555",
+      "filename": "data/slow-nod.json",
+      "audio_filename": null,
+      "samples": 144,
+      "duration_seconds": 1.489838499997859,
+      "status": "valid",
+      "sha256": "c3b98dd49e624a544618b4b58d599e895d62fd2d23d54874f2a5f05110de0219",
+      "bytes": 110943
+    },
+    {
+      "skill_id": "generated.curious",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-090516_curious_head_tilt.json",
+      "audio_filename": "moves/20260820-090516_curious_head_tilt.ogg",
+      "samples": 151,
+      "duration_seconds": 3.0,
+      "status": "valid",
+      "sha256": "94a248be49abce0d29d2876487ca086509bf751ab39e02f2692d8a127f24bf23",
+      "bytes": 36377
+    },
+    {
+      "skill_id": "generated.agree",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102352_yes_an_enthusiastic_agreeing_nod.json",
+      "audio_filename": "moves/20260820-102352_yes_an_enthusiastic_agreeing_nod.ogg",
+      "samples": 131,
+      "duration_seconds": 2.6,
+      "status": "valid",
+      "sha256": "043e308ce3748f2e466ab57ef49c610b216cba7d8e1975d2848b2905f6d525fc",
+      "bytes": 30921
+    },
+    {
+      "skill_id": "generated.refuse",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102443_no_no_no_a_firm_refusal_head_shake.json",
+      "audio_filename": "moves/20260820-102443_no_no_no_a_firm_refusal_head_shake.ogg",
+      "samples": 151,
+      "duration_seconds": 3.0,
+      "status": "valid",
+      "sha256": "85ef735537823432467b25b9a9e4e275581882b1bf0a06e3406eb58ad0d93d71",
+      "bytes": 36372
+    },
+    {
+      "skill_id": "generated.greet",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102605_a_warm_hello_greeting_someone_who_just_w.json",
+      "audio_filename": "moves/20260820-102605_a_warm_hello_greeting_someone_who_just_w.ogg",
+      "samples": 161,
+      "duration_seconds": 3.2,
+      "status": "valid",
+      "sha256": "f553a23c4f12ade18f8358cf82109d1c10dd0efade4c840d032a777bf30bdec2",
+      "bytes": 40506
+    },
+    {
+      "skill_id": "generated.confused",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102655_hm_a_puzzled_head_tilt_didn_t_quite_catc.json",
+      "audio_filename": "moves/20260820-102655_hm_a_puzzled_head_tilt_didn_t_quite_catc.ogg",
+      "samples": 126,
+      "duration_seconds": 2.5,
+      "status": "valid",
+      "sha256": "c406a4367b0acd686d923d828728e1911ad38c3b3632e1dfe940d8114121c3ac",
+      "bytes": 30855
+    },
+    {
+      "skill_id": "generated.joy",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102758_a_burst_of_pure_joy_after_great_news.json",
+      "audio_filename": "moves/20260820-102758_a_burst_of_pure_joy_after_great_news.ogg",
+      "samples": 176,
+      "duration_seconds": 3.5,
+      "status": "valid",
+      "sha256": "ff321e26f9c9aca4a997289f16ea48715c8f9dbe6d83827e9cc651f1af8b014a",
+      "bytes": 41769
+    },
+    {
+      "skill_id": "generated.sigh",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102850_a_long_melancholic_sigh_slowly_deflating.json",
+      "audio_filename": "moves/20260820-102850_a_long_melancholic_sigh_slowly_deflating.ogg",
+      "samples": 326,
+      "duration_seconds": 6.5,
+      "status": "valid",
+      "sha256": "03d93a7ad508e2caadae66b751f154e890d7e5bb8bf84d189c35bcd539746a42",
+      "bytes": 78288
+    },
+    {
+      "skill_id": "generated.startled",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-102932_a_startled_jump_when_a_door_slams.json",
+      "audio_filename": "moves/20260820-102932_a_startled_jump_when_a_door_slams.ogg",
+      "samples": 111,
+      "duration_seconds": 2.2,
+      "status": "valid",
+      "sha256": "99363a8f9626711e74be20889195ef54d9a209be09a28ed506c48f4b771ac46c",
+      "bytes": 27452
+    },
+    {
+      "skill_id": "generated.shy_celebrate",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-103113_a_shy_but_proud_little_celebration.json",
+      "audio_filename": "moves/20260820-103113_a_shy_but_proud_little_celebration.ogg",
+      "samples": 226,
+      "duration_seconds": 4.5,
+      "status": "valid",
+      "sha256": "625a6aeaaa32af52ae7e8e7723e70e7d2299fca6c4345c0d3a874771a9101683",
+      "bytes": 55976
+    },
+    {
+      "skill_id": "generated.sassy",
+      "repo_id": "tfrere/reachy-mini-generated-moves",
+      "revision": "6d36227d2c425c14477576f09e1b109ea64c1e92",
+      "filename": "moves/20260820-094210_an_i_don_t_care_what_you_say_sassy_movem.json",
+      "audio_filename": "moves/20260820-094210_an_i_don_t_care_what_you_say_sassy_movem.ogg",
+      "samples": 201,
+      "duration_seconds": 4.0,
+      "status": "valid",
+      "sha256": "5443c00791bf68b5ba48b6a8d152257f38ee30d6a9f95a5b5fdc143ee53a9992",
+      "bytes": 49781
+    },
+    {
+      "skill_id": "alive.sneeze",
+      "repo_id": "HTurlet15/reachy-alive",
+      "revision": "e0ae90e3642ea1e07e4cdb4172290ead869d95a6",
+      "filename": "data/sneezing.json",
+      "audio_filename": "data/sneezing.wav",
+      "samples": 503,
+      "duration_seconds": 5.1921908250000115,
+      "status": "valid",
+      "sha256": "87d810a1c217800424c31563a5c74eb9017dff4b1023159406536419a3573b53",
+      "bytes": 370248
+    },
+    {
+      "skill_id": "alive.hiccup",
+      "repo_id": "HTurlet15/reachy-alive",
+      "revision": "e0ae90e3642ea1e07e4cdb4172290ead869d95a6",
+      "filename": "data/hiccup-full.json",
+      "audio_filename": "data/hiccup-full.wav",
+      "samples": 904,
+      "duration_seconds": 9.394106054999838,
+      "status": "valid",
+      "sha256": "ec519c4090a185ac50c45e7e03a8a5565995284c779534243a893c697fcf3d6a",
+      "bytes": 664996
+    },
+    {
+      "skill_id": "personality.change",
+      "repo_id": "tfrere/reachy-personalities",
+      "revision": "02ed9f1a478ec19a346e7bec90bb6af83c09e1c1",
+      "filename": "data/change-personality.json",
+      "audio_filename": null,
+      "samples": 64,
+      "duration_seconds": 1.2,
+      "status": "valid",
+      "sha256": "e1dc097781be06a4999d54622550756790d39c0d70f65939f4b83b70f713fbd4",
+      "bytes": 46295
+    },
+    {
+      "skill_id": "apirrone.secret_dance",
+      "repo_id": "apirrone/marionette-moves",
+      "revision": "d97420b711853ab698c13b612eb3ee01ad0b317f",
+      "filename": "data/secret-dance.json",
+      "audio_filename": "data/secret-dance.wav",
+      "samples": 612,
+      "duration_seconds": 19.97086184299951,
+      "status": "valid",
+      "sha256": "59f8a1f918db82de52decffbb51c6e37307074fc08313218d54eecbb7e94d831",
+      "bytes": 449544
+    },
+    {
+      "skill_id": "shivansh.attention",
+      "repo_id": "ShivanshVikram/happy-dance",
+      "revision": "fecbbfb3a0b466c8d07e7c8a72ebc01ec7264389",
+      "filename": "data/attention.json",
+      "audio_filename": null,
+      "samples": 1893,
+      "duration_seconds": 19.997268376000193,
+      "status": "valid",
+      "sha256": "0730ac11a09fd541a790ed064cd15c76b45b281d55c21857d5c7388ebe03134c",
+      "bytes": 1382525
+    },
+    {
+      "skill_id": "shivansh.attention3",
+      "repo_id": "ShivanshVikram/happy-dance",
+      "revision": "fecbbfb3a0b466c8d07e7c8a72ebc01ec7264389",
+      "filename": "data/attention-3.json",
+      "audio_filename": "data/attention-3.wav",
+      "samples": 1891,
+      "duration_seconds": 19.996676459000128,
+      "status": "valid",
+      "sha256": "74dceb886f48b637222cce7b257ff98ab08a3e08fe80287f56b977c3e7a29ad8",
+      "bytes": 1384409
+    },
+    {
+      "skill_id": "pirate.laugh",
+      "repo_id": "Anne-Charlotte/pirate-character",
+      "revision": "30c3b10d510e94c9aaf219f278111c8715b34c3b",
+      "filename": "data/pirate-laughter.json",
+      "audio_filename": "data/pirate-laughter.ogg",
+      "samples": 161,
+      "duration_seconds": 3.31,
+      "status": "valid",
+      "sha256": "70448a85ceec1ed88ef465608807323b7fba25e22c5b230e44345299f9464982",
+      "bytes": 35667
+    },
+    {
+      "skill_id": "pirate.arr",
+      "repo_id": "Anne-Charlotte/pirate-character",
+      "revision": "30c3b10d510e94c9aaf219f278111c8715b34c3b",
+      "filename": "data/pirate-arr.json",
+      "audio_filename": "data/pirate-arr.ogg",
+      "samples": 80,
+      "duration_seconds": 1.6540000000000001,
+      "status": "valid",
+      "sha256": "0fddc30ae2ba34fef2e4fb5b6b760ff0a79edd993ba09f46845eb5562dd7f56d",
+      "bytes": 17657
+    }
+  ],
+  "excluded_candidates": [
+    {
+      "repo_id": "ShivanshVikram/happy-dance",
+      "filename": "data/attention-1.json",
+      "reason": "audio_only=true; empty set_target_data"
+    },
+    {
+      "repo_id": "ShivanshVikram/happy-dance",
+      "filename": "data/attention-2.json",
+      "reason": "audio_only=true; empty set_target_data"
+    }
+  ]
+}

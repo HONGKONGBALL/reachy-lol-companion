@@ -1,0 +1,35 @@
+{
+  "name": "默默",
+  "voice": "velvet",
+  "intensity": "normal",
+  "volume": 1.0,
+  "input_device": null,
+  "output_device": null,
+  "seat_yaw": null,
+  "events": {
+    "kill": {
+      "enabled": true,
+      "reaction": "Hype"
+    },
+    "death": {
+      "enabled": true,
+      "reaction": "Supportive"
+    },
+    "multikill": {
+      "enabled": true,
+      "reaction": "Very excited"
+    },
+    "objective": {
+      "enabled": true,
+      "reaction": "Happy"
+    },
+    "lowhp": {
+      "enabled": true,
+      "reaction": "Silent"
+    },
+    "victory": {
+      "enabled": true,
+      "reaction": "Celebrate"
+    }
+  }
+}
