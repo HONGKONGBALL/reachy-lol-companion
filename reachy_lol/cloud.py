@@ -402,9 +402,12 @@ class Cloud:
             '无依据时只接情绪、不编造过程。玩笑不变成事实。motion按HF动作说明选择。'
             'memory 的 episode_summary 是有来源的历史摘要，按 match_id 区分对局；revoked=true 的旧判断不得引用。'
             'observed_fact 与 inference 分开，不能把推断或其他角色的玩笑当事实或自己的亲历。'
+            '死亡本身不是每次都要主动回应的理由。不要在每次阵亡或复活倒计时时轮流说同义安慰话，'
+            '也不要重复劝喝水、歇口气、复活再来。只有新增的具体情况值得聊才开口；'
+            '如果本次只是又死了或继续等复活，没有新的内容，text留空。主人主动说话由直接对话回应。'
             'evidence 只能引用底稿存在的证据 ID。无需回应时 text 为空。'+
             ('当前是热闹陪玩模式，允许在海克斯大乱斗等高频战斗中简短插话。'
-             '有值得回应的击杀、阵亡、贡献或处境就说一句，约2到4秒；不要因safe=false或仍在战斗而返回空话或保持沉默。'
+             '有值得回应的击杀、贡献或新的具体处境就说一句，约2到4秒；不要仅因safe=false或仍在战斗而保持沉默。'
              if (preferences or {}).get('intensity')=='chaos' else ''),
             json.dumps(data,ensure_ascii=False),Reply)
         if result.motion not in MOTIONS:

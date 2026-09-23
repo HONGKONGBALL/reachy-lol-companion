@@ -47,7 +47,7 @@ def test_life_state_requires_unique_verified_owner_not_dead_teammate(tmp_path,de
     asyncio.run(run())
 
 
-def test_death_support_reaches_audio_without_vision_or_chat_model(tmp_path):
+def test_calling_name_while_dead_still_reaches_audio(tmp_path):
     async def run():
         r=Runtime(tmp_path);now=time.monotonic();data=packet()
         r.identity=r.identities.update(data,r.events.match_id)
@@ -65,13 +65,15 @@ def test_death_support_reaches_audio_without_vision_or_chat_model(tmp_path):
         r.audio.play=play
         task=None
         try:
-            r.queue_death_reactions([event,event])
-            assert len(r.pending)==1 and r.pending[0].evidence==['death1']
+            r.queue_kill_reactions([event,event])
+            assert not r.pending and r.event_reactions.empty()
+            await r.owner_text('默默！')
+            assert len(r.pending)==1 and r.pending[0].purpose=='name_call'
             task=asyncio.create_task(r.speech_loop())
             await asyncio.wait_for(played.wait(),1)
             r.cloud.tts.assert_awaited_once()
             r.update_owner_life(packet(False),time.monotonic())
-            assert not r.death_reaction_allowed(time.monotonic(),False)
+            assert not r.gate.respawning(time.monotonic())
         finally:
             if task:
                 task.cancel();await asyncio.gather(task,return_exceptions=True)
@@ -79,17 +81,17 @@ def test_death_support_reaches_audio_without_vision_or_chat_model(tmp_path):
     asyncio.run(run())
 
 
-def test_death_preference_and_quiet_are_respected(tmp_path):
+def test_repeated_deaths_do_not_enqueue_canned_speech(tmp_path):
     async def run():
         r=Runtime(tmp_path);r.gate.running=True
         r.identity=r.identities.update(packet(),r.events.match_id)
-        event={'EventName':'ChampionKill','VictimName':'owner','event_key':'death1'}
         try:
-            r.preferences.events['death'].enabled=False
-            r.queue_death_reactions([event]);assert not r.pending
-            r.preferences.events['death'].enabled=True;r.gate.quiet=True
-            r.queue_death_reactions([event]);assert not r.pending
-            r.gate.quiet=False
-            r.queue_death_reactions([{**event,'VictimName':'enemy'}]);assert not r.pending
+            for i in range(10):
+                r.update_owner_life(packet(False),float(i))
+                r.update_owner_life(packet(True),float(i)+.5)
+                r.queue_kill_reactions([{'EventName':'ChampionKill','VictimName':'owner',
+                    'KillerName':'enemy','event_key':f'death{i}'}])
+                assert not r.pending and r.event_reactions.empty()
+            assert r.preferences.events['death'].enabled
         finally:await r.cloud.client.aclose()
     asyncio.run(run())

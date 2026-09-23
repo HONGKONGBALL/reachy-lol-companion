@@ -399,8 +399,6 @@ class Runtime:
             return self.dialogue_allowed(now)
         if self.speech_candidate and self.speech_candidate.purpose=='kill_reaction':
             return self.kill_reaction_allowed(now,False)
-        if self.speech_candidate and self.speech_candidate.purpose=='death_reaction':
-            return self.death_reaction_allowed(now,False)
         return self.gate.allowed(now,False)
 
     def update_owner_life(self,data,now):
@@ -411,36 +409,6 @@ class Runtime:
         names=set(self.identity.get('aliases',[]))
         players=[p for p in data.get('allPlayers',[]) if names.intersection(aliases(p))]
         self.gate.owner_dead=len(players)==1 and boolean(players[0].get('isDead')) is True
-
-    def death_reaction_allowed(self,now,starting=True,detected_at=None):
-        allowed=self.gate.respawning(now) and self.kill_reaction_allowed(now,starting,detected_at)
-        if allowed:
-            self.state['event_reaction']='已确认阵亡，可以短鼓励'
-        return allowed
-
-    def queue_death_reactions(self,events):
-        if (not self.gate.running or self.gate.paused or self.gate.quiet
-                or not self.identity or self.identity.get('source')=='owner_reported'):
-            return
-        names=set(self.identity.get('aliases',[]))
-        lines=('这波打得憋屈，缓口气，复活咱们再来。',
-               '别让这一波影响心情，等复活我们再打回来。',
-               '先歇口气，这波过去了，下一波我陪你。',
-               '趁复活这会儿放松一下，手别绷太紧。',
-               '陪你等复活，不急着跟这一波较劲。',
-               '缓一缓，咱们还有下一次机会。',
-               '喝口水歇一下，复活了再接着打。')
-        for event in self.relevant_events(events):
-            if (event.get('EventName')!='ChampionKill' or event.get('VictimName') not in names
-                    or event['event_key'] in self.reacted_events):
-                continue
-            recent=self.conversation.snapshot()['recent_replies']
-            text=next((line for line in lines if line not in recent),lines[len(self.reacted_events)%len(lines)])
-            self.pending.appendleft(Candidate(text,self.role,self.gate.epoch,time.monotonic(),
-                [event['event_key']],True,'neutral',purpose='death_reaction'))
-            self.reacted_events.append(event['event_key'])
-            self.state['last_game_event']='检测到你阵亡，准备短鼓励'
-            self.log('event_candidate',purpose='owner_death',evidence=[event['event_key']])
 
     def dialogue_allowed(self,now):
         # The owner explicitly addressed the assistant. Their requested answer
@@ -838,7 +806,6 @@ class Runtime:
                         self.update_owner_life(data,self.game_at)
                         self.ensure_match_research(data)
                         self.queue_kill_reactions(fresh)
-                        self.queue_death_reactions(fresh)
                         self.recent_events = (self.recent_events+self.relevant_events(fresh))[-30:]
                         self.state['game_api'] = '真实 Live Client Data 已连接'
                     except Exception as exc:
@@ -1043,7 +1010,7 @@ class Runtime:
                          source_age_ms=round((time.monotonic()-frames[-1].at)*1000))
                 if (not result.safe and not self.gate.relaxed and not self.gate.respawning(time.monotonic())
                         and self.audio.playing and self.speech_candidate
-                        and self.speech_candidate.proactive and self.speech_candidate.purpose not in ('kill_reaction','death_reaction')):
+                        and self.speech_candidate.proactive and self.speech_candidate.purpose!='kill_reaction'):
                     await self.halt_game_commentary('当前画面有风险')
                 if (self.gate.allowed(time.monotonic()) and not self.ready_announced and not self.pending
                         and self.identities.snapshot().get('fresh') and self.identity):
@@ -1101,7 +1068,7 @@ class Runtime:
                 if (not result.safe and not self.gate.relaxed and not self.gate.respawning(time.monotonic())
                         and frames[-1].at>=self.gate.visual_at and self.audio.playing
                         and (self.speech_candidate is None or
-                             (self.speech_candidate.proactive and self.speech_candidate.purpose not in ('kill_reaction','death_reaction')))):
+                             (self.speech_candidate.proactive and self.speech_candidate.purpose!='kill_reaction'))):
                     await self.halt_game_commentary('视觉风险')
                 # Speech changes the reply turn, not the source game observations.
                 if epoch!=self.gate.epoch:
@@ -1137,7 +1104,7 @@ class Runtime:
             if self.pending:
                 # A waiting game comment must not block a requested answer.
                 direct=next((c for c in self.pending if not c.proactive),None)
-                priority=direct or next((c for c in self.pending if c.purpose in ('kill_reaction','death_reaction')),None)
+                priority=direct or next((c for c in self.pending if c.purpose=='kill_reaction'),None)
                 if priority is not None and self.pending[0] is not priority:
                     self.pending.remove(priority);self.pending.appendleft(priority)
                 item = self.pending[0]
@@ -1147,8 +1114,7 @@ class Runtime:
                     self.pending.popleft()
                     self.log('expired_candidate',episode_id=item.episode_id)
                 elif (self.dialogue_allowed(now) if not item.proactive else
-                      self.kill_reaction_allowed(now,detected_at=item.created) if item.purpose=='kill_reaction' else
-                      self.death_reaction_allowed(now,detected_at=item.created) if item.purpose=='death_reaction' else self.gate.allowed(now,True)):
+                      self.kill_reaction_allowed(now,detected_at=item.created) if item.purpose=='kill_reaction' else self.gate.allowed(now,True)):
                     self.pending.popleft()
                     problem=reply_problem(item.text,self.conversation.completed_replies())
                     # Intentional repetitions of a direct answer are handled at
@@ -1213,7 +1179,7 @@ class Runtime:
                         self.speech_candidate=None
                         wav=None
                 else:
-                    wait_reason=self.state.get('event_reaction') if item.purpose in ('kill_reaction','death_reaction') else self.gate.reason
+                    wait_reason=self.state.get('event_reaction') if item.purpose=='kill_reaction' else self.gate.reason
                     reason=(item.episode_id,item.created,wait_reason)
                     if self.last_wait_reason!=reason:
                         self.log('candidate_wait',episode_id=item.episode_id,reason=wait_reason,
