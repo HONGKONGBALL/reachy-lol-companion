@@ -44,7 +44,7 @@ def test_missing_voice_never_falls_back_to_browser_or_other_voice(tmp_path,monke
     asyncio.run(run())
 
 
-@pytest.mark.parametrize('mode,cooldown',[('chill',45),('normal',30),('chaos',20)])
+@pytest.mark.parametrize('mode,cooldown',[('chill',45),('normal',30),('chaos',8)])
 def test_live_intensity_endpoint_applies_persists_and_unmutes(tmp_path,monkeypatch,mode,cooldown):
     from fastapi.testclient import TestClient
     import importlib
@@ -59,6 +59,7 @@ def test_live_intensity_endpoint_applies_persists_and_unmutes(tmp_path,monkeypat
         assert response.status_code==200
         assert response.json()['behavior']=={'intensity':mode,'quiet':False,'cooldown':cooldown}
         assert r.gate.running and not r.gate.quiet
+        assert r.gate.relaxed is (mode=='chaos')
         assert r.preferences.name=='搭子'
         restored=Runtime(tmp_path)
         try:

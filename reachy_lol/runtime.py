@@ -16,14 +16,14 @@ import numpy as np
 import sounddevice as sd
 from .capture import Capture, windows, game_process_running
 from .cloud import Cloud
-from .core import Candidate, Events, Frame, FrameBuffer, Gate
+from .core import Candidate, Events, Frame, FrameBuffer, Gate, boolean
 from .hardware import Audio, Robot, audio_devices, choose_device, sapi_wav, audio_apartment
 from .settings import Preferences, VOICE_ENV, VOICE_ROLE, EVENT_TYPES
-from .identity import Identity
+from .identity import Identity, aliases
 from .episodes import Episodes
 from .daemon_health import needs_live_probe, robot_health
 from .acoustics import SpeechFrontEnd, UtteranceSegmenter
-from .conversation import ConversationContext, reply_problem, name_call
+from .conversation import ConversationContext, reply_problem, name_call, is_game_vent
 from .match_research import research_match
 from .long_memory import LongMemory
 from .opgg import champion_build
@@ -101,7 +101,8 @@ class Runtime:
         self.audio.volume=self.preferences.volume
         self.audio.input_device=self.preferences.input_device
         self.audio.output_device=self.preferences.output_device
-        self.gate.cooldown={'chill':45,'normal':30,'chaos':20}[self.preferences.intensity]
+        self.gate.cooldown={'chill':45,'normal':30,'chaos':8}[self.preferences.intensity]
+        self.gate.relaxed=self.preferences.intensity=='chaos'
         history=self.root/'evidence'/'hardware.jsonl'
         if history.exists():
             for line in history.read_text(encoding='utf8').splitlines()[-20:]:
@@ -151,6 +152,10 @@ class Runtime:
 
     def snapshot(self):
         self.gate.allowed(time.monotonic())
+        if self.gate.respawning(time.monotonic()):
+            self.state['vision_safety']='游戏接口已确认你在等待复活，可以聊天'
+        elif self.gate.relaxed:
+            self.state['vision_safety']='热闹模式：战斗中也会短回应，叫名字或吐槽直接接话'
         return dict(state=self.state,role=self.role,running=self.gate.running,paused=self.gate.paused,
                     quiet=self.gate.quiet,intensity=self.preferences.intensity,
                     gate=self.gate.reason,frames=len(self.buffer.frames),
@@ -289,7 +294,8 @@ class Runtime:
         self.audio.input_device=prefs.input_device
         self.audio.output_device=prefs.output_device
         self.role=VOICE_ROLE.get(prefs.voice,self.role)
-        self.gate.cooldown={'chill':45,'normal':30,'chaos':20}[prefs.intensity]
+        self.gate.cooldown={'chill':45,'normal':30,'chaos':8}[prefs.intensity]
+        self.gate.relaxed=prefs.intensity=='chaos'
         if intensity_changed:
             self.gate.quiet=False
         return self.preferences_snapshot()
@@ -393,7 +399,48 @@ class Runtime:
             return self.dialogue_allowed(now)
         if self.speech_candidate and self.speech_candidate.purpose=='kill_reaction':
             return self.kill_reaction_allowed(now,False)
+        if self.speech_candidate and self.speech_candidate.purpose=='death_reaction':
+            return self.death_reaction_allowed(now,False)
         return self.gate.allowed(now,False)
+
+    def update_owner_life(self,data,now):
+        self.gate.owner_dead=False
+        self.gate.owner_dead_at=now
+        if not self.identity or self.identity.get('source')=='owner_reported':
+            return
+        names=set(self.identity.get('aliases',[]))
+        players=[p for p in data.get('allPlayers',[]) if names.intersection(aliases(p))]
+        self.gate.owner_dead=len(players)==1 and boolean(players[0].get('isDead')) is True
+
+    def death_reaction_allowed(self,now,starting=True,detected_at=None):
+        allowed=self.gate.respawning(now) and self.kill_reaction_allowed(now,starting,detected_at)
+        if allowed:
+            self.state['event_reaction']='已确认阵亡，可以短鼓励'
+        return allowed
+
+    def queue_death_reactions(self,events):
+        if (not self.gate.running or self.gate.paused or self.gate.quiet
+                or not self.identity or self.identity.get('source')=='owner_reported'):
+            return
+        names=set(self.identity.get('aliases',[]))
+        lines=('这波打得憋屈，缓口气，复活咱们再来。',
+               '别让这一波影响心情，等复活我们再打回来。',
+               '先歇口气，这波过去了，下一波我陪你。',
+               '趁复活这会儿放松一下，手别绷太紧。',
+               '陪你等复活，不急着跟这一波较劲。',
+               '缓一缓，咱们还有下一次机会。',
+               '喝口水歇一下，复活了再接着打。')
+        for event in self.relevant_events(events):
+            if (event.get('EventName')!='ChampionKill' or event.get('VictimName') not in names
+                    or event['event_key'] in self.reacted_events):
+                continue
+            recent=self.conversation.snapshot()['recent_replies']
+            text=next((line for line in lines if line not in recent),lines[len(self.reacted_events)%len(lines)])
+            self.pending.appendleft(Candidate(text,self.role,self.gate.epoch,time.monotonic(),
+                [event['event_key']],True,'neutral',purpose='death_reaction'))
+            self.reacted_events.append(event['event_key'])
+            self.state['last_game_event']='检测到你阵亡，准备短鼓励'
+            self.log('event_candidate',purpose='owner_death',evidence=[event['event_key']])
 
     def dialogue_allowed(self,now):
         # The owner explicitly addressed the assistant. Their requested answer
@@ -788,13 +835,16 @@ class Runtime:
                             continue
                         self.game, self.game_at = data, time.monotonic()
                         self.identity = self.identities.update(data,self.events.match_id)
+                        self.update_owner_life(data,self.game_at)
                         self.ensure_match_research(data)
                         self.queue_kill_reactions(fresh)
+                        self.queue_death_reactions(fresh)
                         self.recent_events = (self.recent_events+self.relevant_events(fresh))[-30:]
                         self.state['game_api'] = '真实 Live Client Data 已连接'
                     except Exception as exc:
                         self.events.connected = False
                         self.game = None
+                        self.gate.owner_dead=False
                         self.identities.disconnect()
                         self.identity=self.identities.context()
                         self.state['game_api'] = ('未开局，等待对局' if self.gate.game_present is False
@@ -991,8 +1041,9 @@ class Runtime:
                 self.log('safety_check',safe=result.safe,continuous=bool(continuous),
                          reason=self.visual_safety.reason,
                          source_age_ms=round((time.monotonic()-frames[-1].at)*1000))
-                if (not result.safe and self.audio.playing and self.speech_candidate
-                        and self.speech_candidate.proactive and self.speech_candidate.purpose!='kill_reaction'):
+                if (not result.safe and not self.gate.relaxed and not self.gate.respawning(time.monotonic())
+                        and self.audio.playing and self.speech_candidate
+                        and self.speech_candidate.proactive and self.speech_candidate.purpose not in ('kill_reaction','death_reaction')):
                     await self.halt_game_commentary('当前画面有风险')
                 if (self.gate.allowed(time.monotonic()) and not self.ready_announced and not self.pending
                         and self.identities.snapshot().get('fresh') and self.identity):
@@ -1047,9 +1098,10 @@ class Runtime:
                          evidence=[f.id for f in evidence_frames],source_at=frames[-1].at,
                          summary=decision_summary(self.latest,identity))
                 self.state['cloud'] = '画面分析返回，待本地门控'
-                if (not result.safe and frames[-1].at>=self.gate.visual_at and self.audio.playing
+                if (not result.safe and not self.gate.relaxed and not self.gate.respawning(time.monotonic())
+                        and frames[-1].at>=self.gate.visual_at and self.audio.playing
                         and (self.speech_candidate is None or
-                             (self.speech_candidate.proactive and self.speech_candidate.purpose!='kill_reaction'))):
+                             (self.speech_candidate.proactive and self.speech_candidate.purpose not in ('kill_reaction','death_reaction')))):
                     await self.halt_game_commentary('视觉风险')
                 # Speech changes the reply turn, not the source game observations.
                 if epoch!=self.gate.epoch:
@@ -1085,7 +1137,7 @@ class Runtime:
             if self.pending:
                 # A waiting game comment must not block a requested answer.
                 direct=next((c for c in self.pending if not c.proactive),None)
-                priority=direct or next((c for c in self.pending if c.purpose=='kill_reaction'),None)
+                priority=direct or next((c for c in self.pending if c.purpose in ('kill_reaction','death_reaction')),None)
                 if priority is not None and self.pending[0] is not priority:
                     self.pending.remove(priority);self.pending.appendleft(priority)
                 item = self.pending[0]
@@ -1095,7 +1147,8 @@ class Runtime:
                     self.pending.popleft()
                     self.log('expired_candidate',episode_id=item.episode_id)
                 elif (self.dialogue_allowed(now) if not item.proactive else
-                      self.kill_reaction_allowed(now,detected_at=item.created) if item.purpose=='kill_reaction' else self.gate.allowed(now,True)):
+                      self.kill_reaction_allowed(now,detected_at=item.created) if item.purpose=='kill_reaction' else
+                      self.death_reaction_allowed(now,detected_at=item.created) if item.purpose=='death_reaction' else self.gate.allowed(now,True)):
                     self.pending.popleft()
                     problem=reply_problem(item.text,self.conversation.completed_replies())
                     # Intentional repetitions of a direct answer are handled at
@@ -1160,7 +1213,7 @@ class Runtime:
                         self.speech_candidate=None
                         wav=None
                 else:
-                    wait_reason=self.state.get('event_reaction') if item.purpose=='kill_reaction' else self.gate.reason
+                    wait_reason=self.state.get('event_reaction') if item.purpose in ('kill_reaction','death_reaction') else self.gate.reason
                     reason=(item.episode_id,item.created,wait_reason)
                     if self.last_wait_reason!=reason:
                         self.log('candidate_wait',episode_id=item.episode_id,reason=wait_reason,
@@ -1328,7 +1381,9 @@ class Runtime:
     def acknowledge_name(self,text,turn_id,input_finished_at,*,failed=False):
         # A real call deserves an audible acknowledgement even without a model
         # answer. It is a direct reply, so combat and proactive cooldown do not apply.
-        answer='刚才的问题没处理好，你再说一次？' if failed else '在呢，你说。'
+        vent=self.gate.relaxed and is_game_vent(text)
+        answer=('这波听着就憋屈，想吐槽就说，我听着。' if vent else
+                '刚才的问题没处理好，你再说一次？' if failed else '在呢，你说。')
         self.conversation.remember('user',text)
         self.conversation.remember('assistant',answer,'queued')
         self.state['dialogue']='听到你叫我，准备回应'
@@ -1341,6 +1396,8 @@ class Runtime:
             return
         turn_id=turn_id or uuid.uuid4().hex
         called,request=name_call(text,self.preferences.name)
+        vent=self.gate.relaxed and is_game_vent(text)
+        wants_reply=called or vent
         action=self.local_voice_action(request if called else text)
         if action and (called or audio_context is None or action=='quiet'):
             return await self.control(action)
@@ -1365,7 +1422,7 @@ class Runtime:
             stage='apply_'+action
             self.log('owner_intent',action=action)
             if action=='ignore':
-                if called:
+                if wants_reply:
                     self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
                     return
                 self.state['dialogue']='这句话未判断为对我说，继续听你说'
@@ -1404,7 +1461,7 @@ class Runtime:
                 problem=reply_problem(reply.text,self.conversation.snapshot()['recent_replies'],text)
                 if problem:
                     self.log('reply_rejected',reason=problem,turn_id=turn_id)
-                    if called:
+                    if wants_reply:
                         self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
                         return
                     self.state['dialogue']='已过滤重复或空泛回复，继续收听'
@@ -1414,7 +1471,7 @@ class Runtime:
                 self.state['last_reply']=reply.text
                 self.pending.append(Candidate(reply.text,self.role,epoch,time.monotonic(),reply.evidence,False,reply.motion,
                                                   turn_id=turn_id,input_finished_at=input_finished_at))
-            elif called:
+            elif wants_reply:
                 self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
         except asyncio.CancelledError:
             pass
@@ -1423,7 +1480,7 @@ class Runtime:
             self.state['cloud']='对话未完成：'+type(exc).__name__
             self.log('dialogue_failed',error=type(exc).__name__,error_code=dialogue_error_code(exc),
                      stage=stage,turn_id=turn_id)
-            if called and epoch==self.gate.epoch and self.gate.running and not self.gate.paused:
+            if wants_reply and epoch==self.gate.epoch and self.gate.running and not self.gate.paused:
                 self.acknowledge_name(text,turn_id,input_finished_at,failed=True)
 
     async def diagnostic(self, kind):

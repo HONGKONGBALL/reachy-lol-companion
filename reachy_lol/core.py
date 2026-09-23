@@ -104,6 +104,12 @@ class Gate:
     robot_at: float = -1000
     game_present: bool | None = None
     game_presence_at: float = -1000
+    owner_dead: bool = False
+    owner_dead_at: float = -1000
+    relaxed: bool = False
+
+    def respawning(self, now):
+        return self.game_present is True and self.owner_dead and 0<=now-self.owner_dead_at<1.5
 
     def invalidate(self, reason):
         self.epoch += 1
@@ -132,6 +138,16 @@ class Gate:
         if self.game_present is False and 0<=now-self.game_presence_at<1.5:
             self.reason='等待你说话' if proactive else '可交流'
             return not proactive
+        if self.respawning(now) and 0<=now-self.last_local<1.2:
+            # The owner is waiting to respawn, even if the spectated fight and
+            # shop keep changing. Zero HP is not combat risk for this interval.
+            allowed=not proactive or now-self.last_spoken>=self.cooldown
+            self.reason='等待复活，可以聊天' if allowed else '主动冷却'
+            return allowed
+        if self.relaxed and self.game_present is True and 0<=now-self.last_local<1.2:
+            allowed=not proactive or now-self.last_spoken>=self.cooldown
+            self.reason='热闹模式，战斗中也可短回应' if allowed else '短回应间隔'
+            return allowed
         checks = [
             (now-self.last_local < 1.2, '本地状态过期'),
             (self.safe_since is not None and now-self.safe_since >= 2, '等待持续安全线索'),

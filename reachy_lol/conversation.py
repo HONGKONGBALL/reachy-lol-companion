@@ -41,6 +41,13 @@ def has_address_cue(text, names=()):
                           r'结束会话|暂停|关闭麦克风|恢复说话|继续陪我|可以说话)',text.strip()))
 
 
+def is_game_vent(text):
+    """Opt-in lively mode accepts game frustration without a wake word."""
+    return bool(re.search(r'甩锅|不是我的锅|这(?:波|把|局).{0,8}(?:锅|离谱|气死|气炸|难受)|'
+                          r'(?:队友|打野|辅助|上单|中单|AD|ad).{0,16}(?:送|不跟|没跟|不来|坑|挂机|死人|废物|干嘛|在干|离谱)|'
+                          r'气死我|气炸了|凭什么怪我|怎么又怪我|都怪队友|队友.{0,6}有病',text))
+
+
 def reply_problem(text, recent, owner_text=''):
     value=compact(text)
     if not value:
